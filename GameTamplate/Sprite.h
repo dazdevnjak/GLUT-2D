@@ -95,8 +95,8 @@ public:
 		GLfloat v = 0.0f;
 
 		if (texture_index < number_of_frames.x * number_of_frames.y) {
-			GLuint current_y = current_frame / static_cast<int>(number_of_frames.x);
-			GLuint current_x = current_frame % static_cast<int>(number_of_frames.x);
+			GLuint current_y = current_frame / number_of_frames.x;
+			GLuint current_x = current_frame - current_y * number_of_frames.x;
 
 			u = static_cast<GLfloat>(current_x) * texture_width;
 			v = static_cast<GLfloat>(current_y) * texture_height;

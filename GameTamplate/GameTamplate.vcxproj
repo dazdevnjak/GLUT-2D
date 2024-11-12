@@ -148,6 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="Primitives.h" />
     <ClInclude Include="Sprite.h" />
   </ItemGroup>

@@ -12,7 +12,7 @@ private:
 	glm::vec2 scale;
 
 	primitive primitive;
-	Sprite sprite;
+	Sprite* sprite;
 
 	glm::vec2 velocity;
 
@@ -27,11 +27,13 @@ public:
 		: position(pos), velocity(vel), rotation(0.0f), scale(1.0f, 1.0f),
 		primitive(prim), sprite(), is_visible(true), is_active(true) {}
 
-	GameObject(const glm::vec2& pos, const glm::vec2& vel, const Sprite& spr)
+	GameObject(const glm::vec2& pos, const glm::vec2& vel, Sprite* spr)
 		: position(pos), velocity(vel), rotation(0.0f), scale(1.0f, 1.0f),
 		sprite(spr), is_visible(true), is_active(true) {}
 
-	~GameObject() = default;
+	~GameObject() {
+		delete sprite;
+	}
 
 	glm::vec2 get_position() const { return position; }
 	void set_position(const glm::vec2& new_position) { position = new_position; }
@@ -51,8 +53,8 @@ public:
 	glm::vec2 get_scale() const { return scale; }
 	void set_scale(const glm::vec2& new_scale) { scale = new_scale; }
 
-	Sprite get_sprite() const { return sprite; }
-	void set_sprite(const Sprite& spr) { sprite = spr; }
+	Sprite* get_sprite() const { return sprite; }
+	void set_sprite(Sprite* spr) { sprite = spr; }
 
 	primitive_type get_primitive_type() const { return primitive.type; }
 
@@ -64,8 +66,8 @@ public:
 
 	void update(float dt) {
 		if (is_active) {
-			if (sprite.get_textures() != nullptr) {
-				sprite.update(dt);
+			if (sprite) {
+				sprite->update(dt);
 			}
 			position += velocity * dt;
 			check_edges();
@@ -80,9 +82,9 @@ public:
 		glScalef(scale.x, scale.y, 1.0f);
 
 		if (is_visible) {
-			if (sprite.get_textures() != nullptr) {
+			if (sprite) {
 				glEnable(GL_TEXTURE_2D);
-				sprite.render();
+				sprite->render();
 				glDisable(GL_TEXTURE_2D);
 			}
 

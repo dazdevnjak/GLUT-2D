@@ -1,4 +1,6 @@
 #include "GameObject.h"
+#include "Input.h"
+
 #include <vector>
 
 float delta_time;
@@ -13,12 +15,28 @@ void initialize() {
 	player = new GameObject(
 		glm::vec2(0.0f),
 		glm::vec2(0.0f),
-		Sprite("Sprites/player.png", glm::vec2(26, 22), 1, glm::vec2(8, 1), (GLboolean)false)
+		new Sprite("Sprites/player.png", glm::vec2(26, 22), 1, glm::vec2(8, 1), (GLboolean)false)
 	);
 }
 
 void update(float dt) {
+	
+	if (Input::get_key('A')) {
+		float new_x = player->get_position().x;
+		new_x -= 300.0f * dt;
+		player->set_position(glm::vec2(new_x, player->get_position().y));
+		player->get_sprite()->set_sprite_flip(glm::vec2(true, false));
+	}
+	if (Input::get_key('D')) {
+		float new_x = player->get_position().x;
+		new_x += 300.0f * dt;
+		player->set_position(glm::vec2(new_x, player->get_position().y));
+		player->get_sprite()->set_sprite_flip(glm::vec2(false, false));
+	}
+
 	player->update(dt);
+
+	Input::update();
 }
 
 void render() {
@@ -55,18 +73,13 @@ void init_game(void) {
 }
 
 void reshape(int w, int h) {
+	window_width = w;
+	window_height = h;
+
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-
-	GLfloat aspect_ratio = (GLfloat)w / (GLfloat)h;
-	GLfloat zoom_factor = 1.5f;
-
-	GLfloat ortho_width = w / zoom_factor;
-	GLfloat ortho_height = h / zoom_factor;
-
-	gluOrtho2D(-ortho_width / 2.0f, ortho_width / 2.0f, -ortho_height / 2.0f, ortho_height / 2.0f);
-
+	gluOrtho2D(0.0, w, 0.0, h);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -82,6 +95,7 @@ int main(int argc, char** argv) {
 
 	init_game();
 
+	Input::set_callback_functions();
 	initialize();
 
 	glutDisplayFunc(game_loop);
