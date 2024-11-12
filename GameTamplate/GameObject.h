@@ -1,63 +1,9 @@
 #pragma once
-#include <glm.hpp>
+#include "Sprite.h"
+#include "Primitives.h"
+
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
-
-#include <glut.h>
-
-#define DEG2RAD 3.14 / 180.0
-
-enum primitive_type {
-	circle,
-	cube,
-	triangle
-};
-
-struct primitive {
-	primitive_type type;
-	glm::vec3 line;
-	glm::vec3 fill;
-
-	primitive() = default;
-
-	//krug
-	float radius;
-
-	static primitive create_circle(const glm::vec3& line_color, const glm::vec3& fill_color, float r) {
-		primitive p;
-		p.type = primitive_type::circle;
-		p.line = line_color;
-		p.fill = fill_color;
-		p.radius = r;
-		return p;
-	}
-
-	//kocka
-	float size;
-
-	static primitive create_cube(const glm::vec3& line_color, const glm::vec3& fill_color, float s) {
-		primitive p;
-		p.type = primitive_type::cube;
-		p.line = line_color;
-		p.fill = fill_color;
-		p.size = s;
-		return p;
-	}
-
-	//trougao
-	float base;
-	float height;
-
-	static primitive create_triangle(const glm::vec3& line_color, const glm::vec3& fill_color, float b, float h) {
-		primitive p;
-		p.type = primitive_type::triangle;
-		p.line = line_color;
-		p.fill = fill_color;
-		p.base = b;
-		p.height = h;
-		return p;
-	}
-};
 
 class GameObject {
 private:
@@ -66,19 +12,26 @@ private:
 	glm::vec2 scale;
 
 	primitive primitive;
+	Sprite sprite;
 
 	glm::vec2 velocity;
 
+	GLboolean is_visible;
+	GLboolean is_active;
 public:
 	GameObject()
 		: position(0.0f, 0.0f), velocity(0.0f, 0.0f),
-		rotation(0.0f), scale(1.0f, 1.0f), primitive() {}
+		rotation(0.0f), scale(1.0f, 1.0f), primitive(), sprite(), is_visible(true), is_active(true) {}
 
 	GameObject(const glm::vec2& pos, const glm::vec2& vel, const struct primitive& prim)
 		: position(pos), velocity(vel), rotation(0.0f), scale(1.0f, 1.0f),
-		primitive(prim) {}
+		primitive(prim), sprite(), is_visible(true), is_active(true) {}
 
-	~GameObject() {}
+	GameObject(const glm::vec2& pos, const glm::vec2& vel, const Sprite& spr)
+		: position(pos), velocity(vel), rotation(0.0f), scale(1.0f, 1.0f),
+		sprite(spr), is_visible(true), is_active(true) {}
+
+	~GameObject() = default;
 
 	glm::vec2 get_position() const { return position; }
 	void set_position(const glm::vec2& new_position) { position = new_position; }
@@ -98,11 +51,25 @@ public:
 	glm::vec2 get_scale() const { return scale; }
 	void set_scale(const glm::vec2& new_scale) { scale = new_scale; }
 
+	Sprite get_sprite() const { return sprite; }
+	void set_sprite(const Sprite& spr) { sprite = spr; }
+
 	primitive_type get_primitive_type() const { return primitive.type; }
 
+	GLboolean get_is_visible() const { return is_visible; }
+	void set_is_visible(const GLboolean is_visible) { this->is_visible = is_visible; }
+
+	GLboolean get_is_active() const { return is_active; }
+	void set_is_active(const GLboolean is_active) { this->is_active = is_active; }
+
 	void update(float dt) {
-		position += velocity * dt;
-		check_edges();
+		if (is_active) {
+			if (sprite.get_textures() != nullptr) {
+				sprite.update(dt);
+			}
+			position += velocity * dt;
+			check_edges();
+		}
 	}
 
 	void render() {
@@ -112,18 +79,26 @@ public:
 		glRotatef(rotation, 0.0f, 0.0f, 1.0f);
 		glScalef(scale.x, scale.y, 1.0f);
 
+		if (is_visible) {
+			if (sprite.get_textures() != nullptr) {
+				glEnable(GL_TEXTURE_2D);
+				sprite.render();
+				glDisable(GL_TEXTURE_2D);
+			}
+
 		switch (primitive.type) {
-		case primitive_type::circle:
-			draw_circle(primitive.radius);
-			break;
-		case primitive_type::cube:
-			draw_cube(primitive.size);
-			break;
-		case primitive_type::triangle:
-			draw_triangle(primitive.base, primitive.height);
-			break;
-		default:
-			break;
+			case primitive_type::circle:
+				draw_circle(primitive.radius);
+				break;
+			case primitive_type::cube:
+				draw_cube(primitive.size);
+				break;
+			case primitive_type::triangle:
+				draw_triangle(primitive.base, primitive.height);
+				break;
+			default:
+				break;
+			}
 		}
 
 		glPopMatrix();
@@ -131,25 +106,32 @@ public:
 
 private:
 	void draw_circle(float radius) {
+		glDisable(GL_TEXTURE_2D);
+
 		glLineWidth(2.0f);
 		glColor3f(primitive.line.r, primitive.line.g, primitive.line.b);
 		glBegin(GL_LINE_LOOP);
-		for (int i = 0; i < 360; i++) {
-			float theta = i * DEG2RAD;
+		const int segments = 50;
+		for (int i = 0; i < segments; i++) {
+			float theta = glm::radians((i / static_cast<float>(segments)) * 360.0f);
 			glVertex2f(cos(theta) * radius, sin(theta) * radius);
 		}
 		glEnd();
 
 		glColor3f(primitive.fill.r, primitive.fill.g, primitive.fill.b);
 		glBegin(GL_POLYGON);
-		for (int i = 0; i < 360; i++) {
-			float theta = i * DEG2RAD;
+		for (int i = 0; i < segments; i++) {
+			float theta = glm::radians((i / static_cast<float>(segments)) * 360.0f);
 			glVertex2f(cos(theta) * radius, sin(theta) * radius);
 		}
 		glEnd();
+
+		glEnable(GL_TEXTURE_2D);
 	}
 
 	void draw_cube(float size) {
+		glDisable(GL_TEXTURE_2D);
+
 		glLineWidth(2.0f);
 		glColor3f(primitive.line.r, primitive.line.g, primitive.line.b);
 		glBegin(GL_LINE_LOOP);
@@ -166,9 +148,13 @@ private:
 		glVertex2f(size / 2, size / 2);
 		glVertex2f(-size / 2, size / 2);
 		glEnd();
+
+		glEnable(GL_TEXTURE_2D);
 	}
 
 	void draw_triangle(float base, float height) {
+		glDisable(GL_TEXTURE_2D);
+
 		glLineWidth(2.0f);
 		glColor3f(primitive.line.r, primitive.line.g, primitive.line.b);
 		glBegin(GL_LINE_LOOP);
@@ -183,6 +169,8 @@ private:
 		glVertex2f(base / 2, -height / 2);
 		glVertex2f(0.0f, height / 2);
 		glEnd();
+
+		glEnable(GL_TEXTURE_2D);
 	}
 
 	void check_edges() {
@@ -200,4 +188,3 @@ private:
 		}
 	}
 };
-

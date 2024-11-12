@@ -1,43 +1,24 @@
 #include "GameObject.h"
 #include <vector>
 
-#define DEG2RAD 3.14 / 180.0
-
 float delta_time;
 int previous_time;
 
-std::vector<GameObject> game_objects;
+int window_width = 800;
+int window_height = 500;
+
+GameObject* player;
 
 void initialize() {
-	GameObject circle(
-		glm::vec2(200.0f, 150.0f),
+	player = new GameObject(
 		glm::vec2(0.0f),
-		primitive::create_circle(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.5), 50.0f)
-	);
-
-	game_objects.push_back(circle);
-
-	GameObject cube(
-		glm::vec2(400.0f, 300.0f),
 		glm::vec2(0.0f),
-		primitive::create_cube(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), 60.0f)
+		Sprite("Sprites/player.png", glm::vec2(26, 22), 1, glm::vec2(8, 1), (GLboolean)false)
 	);
-
-	game_objects.push_back(cube);
-
-	GameObject triangle(
-		glm::vec2(200.0f, 350.0f),
-		glm::vec2(0.0f),
-		primitive::create_triangle(glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f), 80.0f, 100.0f)
-	);
-
-	game_objects.push_back(triangle);
 }
 
 void update(float dt) {
-	for (auto& obj : game_objects) {
-		obj.update(dt);
-	}
+	player->update(dt);
 }
 
 void render() {
@@ -45,10 +26,7 @@ void render() {
 	//Cistimo sve piksele
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	//Renderujemo kod
-	for (auto& obj : game_objects) {
-		obj.render();
-	}
+	player->render();
 
 	//Menjamo bafer
 	glutSwapBuffers();
@@ -68,14 +46,26 @@ void game_loop(void) {
 }
 
 void init_game(void) {
-
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearColor(100.0 / 255.0, 100.0 / 255.0, 100.0 / 255.0, 0.0);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glShadeModel(GL_SMOOTH);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void reshape(int w, int h) {
+	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0.0, w, 0.0, h);
+
+	GLfloat aspect_ratio = (GLfloat)w / (GLfloat)h;
+	GLfloat zoom_factor = 1.5f;
+
+	GLfloat ortho_width = w / zoom_factor;
+	GLfloat ortho_height = h / zoom_factor;
+
+	gluOrtho2D(-ortho_width / 2.0f, ortho_width / 2.0f, -ortho_height / 2.0f, ortho_height / 2.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -86,7 +76,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(500, 500);
+	glutInitWindowSize(window_width, window_height);
 	glutInitWindowPosition(50, 50);
 	glutCreateWindow("Tamplate!");
 
