@@ -1,0 +1,34 @@
+# Ignore build directories
+Debug/
+Release/
+x64/
+x86/
+
+# Ignore Visual Studio temporary files
+*.log
+*.obj
+*.exe
+*.pdb
+*.idb
+*.class
+*.ilk
+*.tlog
+*.lastbuildstate
+*.suo
+*.user
+*.ncb
+*.sdf
+*.opensdf
+*.cachefile
+ipch/
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+
+# Ignore Visual Studio solution file
+*.sln
+
+# Ignore other IDE files
+.vs/
+.vscode/
